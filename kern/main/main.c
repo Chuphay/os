@@ -114,6 +114,9 @@ boot(void)
 	vfs_bootstrap();
 	kheap_nextgeneration();
 
+
+    int j = *((int *) 0x0);
+    (void) j;
 	/* Probe and initialize devices. Interrupts should come on. */
 	kprintf("Device probe...\n");
 	KASSERT(curthread->t_curspl > 0);
