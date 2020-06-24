@@ -215,7 +215,11 @@ kmain(char *arguments)
 {
 	boot();
 
-	menu(arguments);
+    int c = *((int *) 0x0);
+    kprintf("segmented faulted yet?\n");
+    (void) c;
 
+    kprintf("The value of ptr is : %d\n", c  );
+	menu(arguments);
 	/* Should not get here */
 }
