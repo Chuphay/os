@@ -65,6 +65,7 @@ sys_dup(void)
   filedup(f);
   return fd;
 }
+int readcount = 0;
 
 int
 sys_read(void)
@@ -72,10 +73,22 @@ sys_read(void)
   struct file *f;
   int n;
   char *p;
+  readcount++;
 
   if(argfd(0, 0, &f) < 0 || argint(2, &n) < 0 || argptr(1, &p, n) < 0)
     return -1;
   return fileread(f, p, n);
+}
+
+// return how many calls to the read() system call. 
+// since start.
+// interestingly, we never actually seem to define getreadcount
+// int getreadcount(void){return 33;}
+
+int 
+sys_getreadcount(void)
+{
+  return readcount; 
 }
 
 int
