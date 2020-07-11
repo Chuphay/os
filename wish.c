@@ -44,10 +44,28 @@ int args(char * buf, char **output){
     return j;
 }
 
+void redirection(char * command, char **arguments, char * file_name){
+    //This is the answer that actually worked: 
+    //https://stackoverflow.com/questions/29154056/redirect-stdout-to-a-file
+    int fp = open(file_name, O_CREATE | O_RDWR);
+    int rc = fork(); 
+    if (rc == 0) { 
+        close(1);
+        dup(fp);
+        exec(command, arguments);
+        printf(2, "exec failed :(\n");
+        exit(); //if it failed, we should exit out of this process
+    } else { 
+        rc = wait();
+        close(fp);   
+    }
+}
+
+
 void execute(int n, char **arguments){
     int i;
     int m; //number to store length of first 
-    int redirection = 0;
+    int redirect= 0;
     char *myargv[n+1];
     
     for (i = 0; i < n; i++){
@@ -55,16 +73,14 @@ void execute(int n, char **arguments){
             printf(1, "redirection!\n");
             if (i != n - 2){
                 printf(1, "syntax for redirection should be something > file_name\n");
+                exit();
             }
-            redirection = 1;
+            redirect = 1;
             break;
         }
         myargv[i] = arguments[i];
     }
     myargv[n] = 0;
-    if (redirection == 1){
-        printf(1, "yo\n");
-    }
 
     m = strlen(myargv[0]);
     char mainarg[m+2]; //+1 to hold the '/' and +1 to hold the 0
@@ -73,63 +89,58 @@ void execute(int n, char **arguments){
         mainarg[i+1] = myargv[0][i];
     }
     mainarg[m+1] = 0;
-    printf(1, "mainarg: %s\n", mainarg);
-    exec(mainarg, myargv);   
-    printf(1, "exec failed :(\n");
-    exit(); //if it failed, we should exit out of this process
-    
-}
-void execute2(int n, char **arguments){
-    char *a[2];
-    a[0] = "/ls";
-    a[1] = 0;
-    int fp = open("test.txt", O_CREATE | O_RDWR);
-    printf(fp, "could this possibly work?\n");
-    close(fp);
-    
-    dup(1);
-    exec("/ls", a);    
+
+    if (redirect == 1){
+        redirection(mainarg, myargv, arguments[n-1]);
+        printf(1, "end of redirection\n");
+        exit();
+    } else {
+        printf(1, "mainarg: %s\n", mainarg);
+        exec(mainarg, myargv);   
+        printf(2, "exec failed :(\n");
+        exit(); //if it failed, we should exit out of this process
+    }
 }
 
+void loop(char * buf, char **arguments){
+    int n = args(buf, arguments);
+    if (strcmp(arguments[0], "") == 0){
+        printf(1, "empty string\n");
+    } else if (strcmp(arguments[0], "exit") == 0){
+        printf(1, "exit\n");
+        exit();
+    } else if (strcmp(arguments[0], "cd") == 0){
+        if (n != 2){
+            printf(1, "changing directories always requires an argument\n");
+        } else {
+            int ret_code = chdir(arguments[1]);
+            printf(1, "changing directory to %s , return code: %d\n", arguments[1], ret_code);
+        }
+    } else {
+        int rc = fork(); //we need to fork because exec eats the process
+        if (rc == 0) { //child process
+            execute(n, arguments); 
+        } else { //parent process
+            rc = wait();
+        }
+    }
+}
 
-int main(void){
 
-    printf(1, "Welcome to Wish!\n");
+int main(int argc, char * argv[]){
+
+    printf(1, "Welcome to %s!\n", argv[0]);
     char buf[BUFF_SIZE]; 
-    int i; 
-    int n; //number of arguments returned from args
-    
     char *arguments[MAX_ARGS];
-    for (i = 0; i < MAX_ARGS ; i++){
-        arguments[i] = (char *)malloc((BUFF_SIZE/MAX_ARGS) * sizeof(char));
+    for (int i = 0; i < MAX_ARGS ; i++){
+        arguments[i] = (char *) malloc((BUFF_SIZE/MAX_ARGS) * sizeof(char));
     }
 
     while (1) {
 
         printf(1, "wish> "); //prompt
-        n = args(buf, arguments);
+        loop(buf, arguments);
 
-
-        if (strcmp(arguments[0], "") == 0){
-            printf(1, "empty string\n");
-        } else if (strcmp(arguments[0], "exit") == 0){
-            printf(1, "exit\n");
-            exit();
-        } else if (strcmp(arguments[0], "cd") == 0){
-            if (n != 2){
-                printf(1, "changing directories always requires an argument\n");
-            } else {
-                int ret_code = chdir(arguments[1]);
-                printf(1, "changing directory to %s , return code: %d\n", arguments[1], ret_code);
-            }
-        } else {
-            int rc = fork(); //we need to fork because exec eats the process
-            if (rc == 0) { //child process
-                execute2(n, arguments); 
-            } else { //parent process
-                rc = wait();
-            }
-        }
     }
 
     exit();
