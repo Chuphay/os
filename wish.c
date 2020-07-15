@@ -133,6 +133,7 @@ int main(int argc, char * argv[]){
     char buf[BUFF_SIZE]; 
     char *arguments[MAX_ARGS];
     for (int i = 0; i < MAX_ARGS ; i++){
+        //allocate for the duration of the program
         arguments[i] = (char *) malloc((BUFF_SIZE/MAX_ARGS) * sizeof(char));
     }
 
