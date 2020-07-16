@@ -91,7 +91,12 @@ sys_uptime(void)
 }
 
 int sys_settickets(void){
-  return settickets(33);
+  int n;
+  if (argint(0, &n) < 0){
+    return -1;
+  }
+  cprintf("argint %d\n", n);
+  return settickets(n);
   //return 44;
 }
 

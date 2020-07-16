@@ -18,7 +18,16 @@ struct pstat {
 
 #endif // _PSTAT_H_
 
+
+int rand(int seed, int mod){
+    int tmp = 1103515245 * seed + 12345; //broken but good enough
+    return tmp % mod;
+
+}
+
 int main(int argc , char * argv[]){
+    int r = rand(5, 2147483648);
+    printf(1, "random: %d\n", r);
     int x1 = settickets(41);
     printf(1, "settickets: %d\n", x1);
     struct pstat s[1];
@@ -29,12 +38,15 @@ int main(int argc , char * argv[]){
 
 
 
-    if (argc != 2){
-        printf(1, "proper usage spin [NUM]\n");
+
+    if (argc != 3){
+        printf(1, "proper usage: spin [NUM] [TICKETS]\n");
         exit();
     }
     // printf(1, "spinning\n");
     int n = atoi(argv[1]);
+    x1 = settickets(argv[2]);
+    printf(1, "settickets: %d\n", x1);
     int i, m = 0;
     for (i = 0; i < n; i++){
         m += i;

@@ -127,7 +127,7 @@ found:
   p->context = (struct context*)sp;
   memset(p->context, 0, sizeof *p->context);
   p->context->eip = (uint)forkret;
-
+  p->tickets = 101; // a little confused by this one 
   return p;
 }
 
@@ -157,6 +157,7 @@ userinit(void)
 
   safestrcpy(p->name, "initcode", sizeof(p->name));
   p->cwd = namei("/");
+  p->tickets = 1;
 
   // this assignment to p->state lets other cores
   // run this process. the acquire forces the above
@@ -214,6 +215,7 @@ fork(void)
   }
   np->sz = curproc->sz;
   np->parent = curproc;
+  np->tickets = curproc->tickets;
   *np->tf = *curproc->tf;
 
   // Clear %eax so that fork returns 0 in the child.
@@ -227,6 +229,7 @@ fork(void)
   safestrcpy(np->name, curproc->name, sizeof(curproc->name));
 
   pid = np->pid;
+
 
   acquire(&ptable.lock);
 
@@ -358,7 +361,7 @@ scheduler(void)
       c->proc = p;
       switchuvm(p);
       p->state = RUNNING;
-      cprintf("running: %s [pid %d]\n", p->name, p->pid);
+      cprintf("running: %s [pid %d] [tickets %d]\n", p->name, p->pid, p->tickets);
       swtch(&(c->scheduler), p->context);
       // cprintf("switched: %s [pid %d]\n", p->name, p->pid);
       switchkvm();
@@ -552,7 +555,14 @@ procdump(void)
 
 int settickets(int number){
   cprintf("amazing!!!! settickets\n");
-  return number;
+  if (number > 0){
+    acquire(&ptable.lock);
+    struct proc *p = myproc(); 
+    p->tickets = number;  
+    release(&ptable.lock); 
+    return 0;
+  }
+  return -1;
 }
 
 int getpinfo(struct pstat * shakingmyhead){
