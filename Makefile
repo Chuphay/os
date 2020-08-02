@@ -71,6 +71,9 @@ QEMU = $(shell if which qemu > /dev/null; \
 	echo "***" 1>&2; exit 1)
 endif
 
+
+# https://www.codetd.com/article/10273375 in the CFLAGS line below, I changed the -O2 flag to plain -O <-- Dave's change
+
 CC = $(TOOLPREFIX)gcc
 AS = $(TOOLPREFIX)gas
 LD = $(TOOLPREFIX)ld
